@@ -116,8 +116,8 @@ export default function AdminLoginPage() {
 
         <p className="text-center mt-6 text-xs text-white/20">
           Not an admin?{' '}
-          <Link href="/login" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
-            Return to main login
+          <Link href="/" className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2">
+            Return to Mentora home
           </Link>
         </p>
       </div>
