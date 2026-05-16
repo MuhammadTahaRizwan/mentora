@@ -4,10 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useStore } from '@/lib/store'
 import toast from 'react-hot-toast'
-import {
-  Eye, EyeOff, ArrowRight, Lock, Mail,
-  Users, CheckCircle, Globe, TrendingUp, GraduationCap,
-} from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Lock, Mail, GraduationCap, Users, BarChart2, FileCheck, MessageSquare } from 'lucide-react'
 
 export default function ConsultantLoginPage() {
   const router = useRouter()
@@ -56,104 +53,98 @@ export default function ConsultantLoginPage() {
     setLoading(false)
   }
 
-  const highlights = [
-    { icon: Users,      text: 'Manage your full student portfolio' },
-    { icon: TrendingUp, text: 'Track application pipelines in real-time' },
-    { icon: Globe,      text: 'Support students across 5 countries' },
-    { icon: CheckCircle,text: 'Review and approve documents instantly' },
+  const features = [
+    { icon: Users,        label: 'Student Portfolio',   desc: 'Manage all your assigned students' },
+    { icon: BarChart2,    label: 'Application Tracking', desc: 'Monitor every application pipeline' },
+    { icon: FileCheck,    label: 'Document Review',      desc: 'Approve and annotate documents' },
+    { icon: MessageSquare,label: 'Direct Messaging',     desc: 'Communicate with students instantly' },
   ]
 
   return (
     <div className="min-h-screen flex">
 
-      {/* ── LEFT PANEL — green ── */}
-      <div className="hidden lg:flex lg:w-[52%] bg-gradient-to-br from-emerald-700 via-green-800 to-teal-900 flex-col justify-between p-14 relative overflow-hidden">
+      {/* ── LEFT PANEL — dark forest green ── */}
+      <div className="hidden lg:flex lg:w-[55%] flex-col justify-between p-14 relative overflow-hidden"
+        style={{ background: 'linear-gradient(145deg, #0d2b1f 0%, #0f3526 40%, #0a2218 100%)' }}>
 
-        {/* Decorative circles */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/5 rounded-full" />
-        <div className="absolute bottom-10 -left-14 w-56 h-56 bg-white/5 rounded-full" />
-        <div className="absolute top-1/2 right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-xl" />
+        {/* Subtle texture rings */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full border border-white/5 -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-[350px] h-[350px] rounded-full border border-white/5 -translate-y-1/3 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full border border-white/4 translate-y-1/3 -translate-x-1/3" />
+        <div className="absolute bottom-24 right-16 w-32 h-32 bg-green-500/8 rounded-full blur-2xl" />
 
         {/* Logo */}
         <div className="relative flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
             <span className="text-white font-black text-xl tracking-tight">Mentora</span>
-            <span className="block text-emerald-300 text-xs font-medium -mt-0.5">Consultant Portal</span>
+            <span className="block text-green-400/70 text-xs font-medium -mt-0.5">Consultant Portal</span>
           </div>
         </div>
 
         {/* Main copy */}
         <div className="relative">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-emerald-100 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-            <div className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" />
-            Active Consultant Dashboard
-          </div>
-
-          <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight mb-5">
-            Guide students<br />to their best<br />
-            <span className="text-emerald-300">future.</span>
+          <h1 className="text-4xl xl:text-[2.75rem] font-black text-white leading-[1.1] mb-5">
+            Empower students.<br />
+            Build careers.<br />
+            <span style={{ color: '#4ade80' }}>Change lives.</span>
           </h1>
-
-          <p className="text-white/60 text-base leading-relaxed mb-10 max-w-sm">
-            Everything you need to manage your student portfolio, track applications, and deliver world-class guidance — in one streamlined platform.
+          <p className="text-white/45 text-sm leading-relaxed mb-12 max-w-sm">
+            Your consultant dashboard gives you everything needed to guide students from first enquiry to final enrolment — all in one focused workspace.
           </p>
 
-          {/* Highlights */}
-          <ul className="space-y-3.5">
-            {highlights.map(h => {
-              const Icon = h.icon
+          {/* Feature grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {features.map(f => {
+              const Icon = f.icon
               return (
-                <li key={h.text} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-emerald-300" />
+                <div key={f.label} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(74,222,128,0.12)' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#4ade80' }} />
                   </div>
-                  <span className="text-white/80 text-sm">{h.text}</span>
-                </li>
+                  <p className="text-white text-xs font-semibold mb-0.5">{f.label}</p>
+                  <p className="text-white/35 text-[11px] leading-relaxed">{f.desc}</p>
+                </div>
               )
             })}
-          </ul>
+          </div>
         </div>
 
-        {/* Stats row */}
-        <div className="relative grid grid-cols-3 gap-3">
-          {[
-            { num: '2,400+', label: 'Students Placed' },
-            { num: '180+',   label: 'Universities' },
-            { num: '98%',    label: 'Success Rate' },
-          ].map(s => (
-            <div key={s.label} className="bg-white/8 border border-white/12 rounded-2xl p-4 backdrop-blur-sm">
-              <div className="text-2xl font-black text-white mb-0.5">{s.num}</div>
-              <div className="text-white/45 text-xs">{s.label}</div>
+        {/* Stats */}
+        <div className="relative flex gap-4">
+          {[{ num: '2,400+', label: 'Students Placed' }, { num: '180+', label: 'Universities' }, { num: '5', label: 'Countries' }].map(s => (
+            <div key={s.label} className="flex-1 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="text-xl font-black text-white mb-0.5">{s.num}</div>
+              <div className="text-white/35 text-xs">{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── RIGHT PANEL — white ── */}
+      {/* ── RIGHT PANEL — clean white ── */}
       <div className="flex-1 flex items-center justify-center p-6 bg-white">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-[400px]">
 
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-green-700 flex items-center justify-center shadow">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0d2b1f, #1a5c3a)' }}>
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <div>
               <span className="text-gray-900 font-black text-lg">Mentora</span>
-              <span className="block text-emerald-600 text-xs font-medium -mt-0.5">Consultant Portal</span>
+              <span className="block text-green-700 text-xs font-medium -mt-0.5">Consultant Portal</span>
             </div>
           </div>
 
           {/* Header */}
           <div className="mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-5">
-              <Users className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style={{ background: '#f0faf4', border: '1px solid #d1fae5' }}>
+              <Users className="w-6 h-6" style={{ color: '#166534' }} />
             </div>
             <h2 className="text-2xl font-black text-gray-900 mb-1">Consultant Sign In</h2>
-            <p className="text-gray-400 text-sm">Access your dashboard to manage students and applications.</p>
+            <p className="text-gray-400 text-sm">Sign in to access your student management dashboard.</p>
           </div>
 
           {/* Form */}
@@ -166,8 +157,11 @@ export default function ConsultantLoginPage() {
                   type="email"
                   value={email}
                   onChange={e => { setEmail(e.target.value); setErrors(p => ({...p, email: undefined})) }}
-                  placeholder="you@mentora.pk"
-                  className={`w-full border ${errors.email ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-emerald-400 focus:ring-emerald-100'} rounded-xl px-4 py-3 pl-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 transition-all`}
+                  placeholder="consultant@mentora.pk"
+                  className={`w-full border ${errors.email ? 'border-red-400' : 'border-gray-200'} rounded-xl px-4 py-3 pl-10 text-sm text-gray-900 placeholder-gray-300 outline-none transition-all`}
+                  style={{ '--tw-ring-color': '#166534' } as React.CSSProperties}
+                  onFocus={e => { if (!errors.email) e.target.style.borderColor = '#166534'; e.target.style.boxShadow = '0 0 0 3px rgba(22,101,52,0.1)' }}
+                  onBlur={e => { e.target.style.borderColor = errors.email ? '#f87171' : '#e5e7eb'; e.target.style.boxShadow = 'none' }}
                 />
               </div>
               {errors.email && <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>}
@@ -182,7 +176,9 @@ export default function ConsultantLoginPage() {
                   value={password}
                   onChange={e => { setPassword(e.target.value); setErrors(p => ({...p, password: undefined})) }}
                   placeholder="••••••••"
-                  className={`w-full border ${errors.password ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-emerald-400 focus:ring-emerald-100'} rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 transition-all`}
+                  className={`w-full border ${errors.password ? 'border-red-400' : 'border-gray-200'} rounded-xl px-4 py-3 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-300 outline-none transition-all`}
+                  onFocus={e => { if (!errors.password) e.target.style.borderColor = '#166534'; e.target.style.boxShadow = '0 0 0 3px rgba(22,101,52,0.1)' }}
+                  onBlur={e => { e.target.style.borderColor = errors.password ? '#f87171' : '#e5e7eb'; e.target.style.boxShadow = 'none' }}
                 />
                 <button
                   type="button"
@@ -198,17 +194,20 @@ export default function ConsultantLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+              className="w-full flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl transition-opacity disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+              style={{ background: 'linear-gradient(135deg, #14532d, #166534)', boxShadow: '0 4px 14px rgba(20,83,45,0.35)' }}
+              onMouseEnter={e => !loading && ((e.currentTarget as HTMLButtonElement).style.opacity = '0.92')}
+              onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
             >
               {loading
                 ? <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 : <ArrowRight className="w-4 h-4" />
               }
-              {loading ? 'Signing in…' : 'Access My Dashboard'}
+              {loading ? 'Signing in…' : 'Access Dashboard'}
             </button>
           </form>
 
-          {/* Dividers */}
+          {/* Divider + other portals */}
           <div className="mt-8 space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-gray-100" />
@@ -218,7 +217,7 @@ export default function ConsultantLoginPage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/login"
-                className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-blue-600 border border-gray-100 hover:border-blue-200 rounded-xl py-2.5 transition-all hover:bg-blue-50"
+                className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-brand-600 border border-gray-100 hover:border-brand-200 rounded-xl py-2.5 transition-all hover:bg-brand-50"
               >
                 <GraduationCap className="w-3.5 h-3.5" />
                 Student Login
@@ -233,8 +232,8 @@ export default function ConsultantLoginPage() {
             </div>
           </div>
 
-          <p className="text-center mt-6 text-xs text-gray-400">
-            <Link href="/" className="text-emerald-600 font-semibold hover:text-emerald-700">
+          <p className="text-center mt-6 text-xs">
+            <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors">
               ← Back to Mentora home
             </Link>
           </p>

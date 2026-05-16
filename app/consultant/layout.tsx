@@ -9,7 +9,7 @@ export default function ConsultantLayout({ children }: { children: React.ReactNo
   const { currentUser } = useStore()
 
   useEffect(() => {
-    if (!currentUser) router.replace('/login')
+    if (!currentUser) router.replace('/consultant-login')
     else if (currentUser.role !== 'consultant') router.replace('/student/dashboard')
   }, [currentUser, router])
 
