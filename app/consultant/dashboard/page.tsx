@@ -1,7 +1,8 @@
 'use client'
 import { useStore } from '@/lib/store'
 import { STATUS_CONFIG, formatDate, timeAgo } from '@/lib/utils'
-import { Users, TrendingUp, CheckCircle, XCircle, Clock, ArrowRight, MessageSquare, FileText, Plus } from 'lucide-react'
+import { useSync } from '@/lib/useSync'
+import { Users, TrendingUp, CheckCircle, XCircle, Clock, ArrowRight, MessageSquare, FileText, Plus, Wifi } from 'lucide-react'
 import Link from 'next/link'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
@@ -16,6 +17,9 @@ const ACTIVITY = [
 ]
 
 export default function ConsultantDashboard() {
+  // Real-time cross-tab sync — updates dashboard when students are assigned in another tab
+  useSync()
+
   const { currentUser, getStudentsByConsultant, applications, documents, messages, users } = useStore()
   const myStudents = currentUser ? getStudentsByConsultant(currentUser.id) : []
   const studentIds = myStudents.map(s => s.id)
@@ -47,7 +51,12 @@ export default function ConsultantDashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Welcome back, {currentUser?.name.split(' ')[0]}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-gray-500 text-sm">Welcome back, {currentUser?.name.split(' ')[0]}</p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <Wifi className="w-2.5 h-2.5" /> Live
+            </span>
+          </div>
         </div>
         <Link href="/consultant/students?new=1" className="btn-primary">
           <Plus className="w-4 h-4" /> Add Student

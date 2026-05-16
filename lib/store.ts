@@ -4,6 +4,11 @@ import { persist } from 'zustand/middleware'
 import { User, Student, Application, Document, Message, Notification, ConsultantProfile, Attendance, SupportedCountry } from './types'
 import { generateId, todayStr } from './utils'
 
+/** Notify other browser tabs of a store change */
+function broadcast() {
+  try { const ch = new BroadcastChannel('mentora-sync'); ch.postMessage('update'); ch.close() } catch {}
+}
+
 // ─── Seed Data ────────────────────────────────────────────────────────────────
 
 const SEED_USERS: User[] = [
@@ -384,6 +389,7 @@ export const useStore = create<AppStore>()(
           link: '/consultant/students',
         })
 
+        broadcast() // notify other tabs instantly
         return { consultantId: chosen.userId }
       },
 
@@ -434,11 +440,13 @@ export const useStore = create<AppStore>()(
       addStudent: (data) => {
         const student: Student = { ...data, id: generateId(), createdAt: new Date().toISOString() }
         set(s => ({ students: [...s.students, student] }))
+        broadcast()
         return student
       },
 
       updateStudent: (id, data) => {
         set(s => ({ students: s.students.map(st => st.id === id ? { ...st, ...data } : st) }))
+        broadcast()
       },
 
       getStudentByUserId: (userId) => get().students.find(s => s.userId === userId),
@@ -455,6 +463,7 @@ export const useStore = create<AppStore>()(
       addApplication: (data) => {
         const app: Application = { ...data, id: generateId(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
         set(s => ({ applications: [...s.applications, app] }))
+        broadcast()
         return app
       },
 
@@ -462,6 +471,7 @@ export const useStore = create<AppStore>()(
         set(s => ({
           applications: s.applications.map(a => a.id === id ? { ...a, ...data, updatedAt: new Date().toISOString() } : a),
         }))
+        broadcast()
       },
 
       deleteApplication: (id) => set(s => ({ applications: s.applications.filter(a => a.id !== id) })),

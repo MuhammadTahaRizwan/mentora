@@ -3,18 +3,54 @@ import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { formatDate, STATUS_CONFIG } from '@/lib/utils'
 import { Student } from '@/lib/types'
-import { Plus, Search, Users, ExternalLink, Edit3, X, ChevronRight, GraduationCap, Phone, Mail } from 'lucide-react'
+import { Plus, Search, Users, ExternalLink, Edit3, X, ChevronRight, GraduationCap, Phone, Mail, Copy, CheckCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { useSync } from '@/lib/useSync'
 
 const COUNTRIES = ['UK', 'USA', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Sweden', 'France', 'Ireland', 'New Zealand']
 const INTAKES = ['September 2025', 'January 2026', 'September 2026', 'January 2027']
 const LEVELS = ['Bachelors', 'Masters', 'MBA', 'PhD', 'Diploma']
 
+function CredentialsCard({ email, password, onClose }: { email: string; password: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(`Email: ${email}\nPassword: ${password}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-slide-up p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <CheckCheck className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">Student Account Created</h3>
+            <p className="text-xs text-gray-400">Share these credentials with the student</p>
+          </div>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 font-mono text-sm space-y-1">
+          <p className="text-gray-700"><span className="text-gray-400 font-sans text-xs">Email</span><br />{email}</p>
+          <p className="text-gray-700"><span className="text-gray-400 font-sans text-xs">Password</span><br />{password}</p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={copy} className="btn-secondary flex-1 justify-center text-sm">
+            {copied ? <><CheckCheck className="w-4 h-4" /> Copied!</> : <><Copy className="w-4 h-4" /> Copy</>}
+          </button>
+          <button onClick={onClose} className="btn-primary flex-1 justify-center text-sm">Done</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AddStudentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const { currentUser, addStudent, register } = useStore()
   const [loading, setLoading] = useState(false)
+  const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null)
   const [form, setForm] = useState({
     name: '', email: '', phone: '', nationality: 'Pakistani',
     targetCountries: ['UK'] as string[],
@@ -52,17 +88,24 @@ function AddStudentModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
     setLoading(true)
     await new Promise(r => setTimeout(r, 600))
 
-    // Create user account for student
+    // Step 1: Create authentication account
+    const tempPassword = 'Mentora@' + Math.floor(1000 + Math.random() * 9000)
     const userResult = register({
       name: form.name, email: form.email, phone: form.phone,
-      password: 'mentora@123', role: 'student',
+      password: tempPassword, role: 'student',
     })
 
-    const userId = userResult.success && userResult.user ? userResult.user.id : `u-${Date.now()}`
+    // Abort if user account creation fails (e.g. email already exists)
+    if (!userResult.success || !userResult.user) {
+      toast.error(userResult.error || 'Failed to create student account')
+      setLoading(false)
+      return
+    }
 
+    // Step 2: Create linked student profile with consultantId pre-set
     addStudent({
-      userId,
-      consultantId: currentUser.id,
+      userId: userResult.user.id,
+      consultantId: currentUser.id,   // ← permanent link to this consultant
       name: form.name, email: form.email, phone: form.phone,
       nationality: form.nationality,
       targetCountries: form.targetCountries,
@@ -74,10 +117,11 @@ function AddStudentModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
       selectedCountry: form.targetCountries[0] as import('@/lib/types').SupportedCountry | undefined,
       onboardingComplete: true,
     })
-    toast.success(`${form.name} has been added! Login: ${form.email} / mentora@123`)
+
+    // Step 3: Show credential card (instead of dismissible toast)
     setLoading(false)
     onSaved()
-    onClose()
+    setCreatedCreds({ email: form.email, password: tempPassword })
   }
 
   return (
@@ -177,6 +221,13 @@ function AddStudentModal({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
         </form>
       </div>
+      {createdCreds && (
+        <CredentialsCard
+          email={createdCreds.email}
+          password={createdCreds.password}
+          onClose={() => { setCreatedCreds(null); onClose() }}
+        />
+      )}
     </div>
   )
 }
@@ -187,7 +238,9 @@ export default function ConsultantStudents() {
   const [showModal, setShowModal] = useState(searchParams.get('new') === '1')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [refreshKey, setRefreshKey] = useState(0)
+
+  // Real-time cross-tab sync — picks up students assigned in other tabs/windows
+  useSync()
 
   const students = currentUser ? getStudentsByConsultant(currentUser.id) : []
 
@@ -318,7 +371,7 @@ export default function ConsultantStudents() {
         </div>
       </div>
 
-      {showModal && <AddStudentModal onClose={() => setShowModal(false)} onSaved={() => setRefreshKey(k => k+1)} />}
+      {showModal && <AddStudentModal onClose={() => setShowModal(false)} onSaved={() => {}} />}
     </div>
   )
 }
