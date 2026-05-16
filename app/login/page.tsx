@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 import {
   Eye, EyeOff, GraduationCap, ArrowRight, Lock, Mail,
-  BookOpen, Globe, Award, Users,
+  BookOpen, Globe, Award,
 } from 'lucide-react'
 
 export default function StudentLoginPage() {
@@ -200,31 +200,6 @@ export default function StudentLoginPage() {
             Don't have an account?{' '}
             <Link href="/register" className="text-brand-600 font-semibold hover:text-brand-700">Create one</Link>
           </p>
-
-          {/* Other portals */}
-          <div className="mt-8 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs text-gray-300">other portals</span>
-              <div className="flex-1 h-px bg-gray-100" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/consultant-login"
-                className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-emerald-600 border border-gray-100 hover:border-emerald-200 rounded-xl py-2.5 transition-all hover:bg-emerald-50"
-              >
-                <Users className="w-3.5 h-3.5" />
-                Consultant Login
-              </Link>
-              <Link
-                href="/admin-login"
-                className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-amber-600 border border-gray-100 hover:border-amber-200 rounded-xl py-2.5 transition-all hover:bg-amber-50"
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                Admin Login
-              </Link>
-            </div>
-          </div>
 
           <p className="text-center mt-6 text-xs">
             <Link href="/" className="text-brand-600 font-semibold hover:text-brand-700">
