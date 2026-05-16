@@ -711,6 +711,14 @@ export const useStore = create<AppStore>()(
         if (updated) void upsertUser(updated)
       },
     }),
-    { name: 'mentora-store-v2' }   // bump key so old localStorage is ignored
+    {
+      name: 'mentora-store-v2',
+      // Never persist the active session — user must always log in again on a fresh page load
+      partialize: (state) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { currentUser, dbLoaded, ...rest } = state
+        return rest
+      },
+    }
   )
 )

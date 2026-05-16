@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store'
 import { GraduationCap, LayoutDashboard, Users, FolderKanban, MessageSquare, LogOut, ChevronRight, Menu, BarChart3, CalendarCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
+import LogoutConfirmModal from './LogoutConfirmModal'
 
 const NAV = [
   { href: '/consultant/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
@@ -21,12 +22,13 @@ export default function ConsultantSidebar({ children }: { children: React.ReactN
   const router = useRouter()
   const { currentUser, logout, getUnreadCount, getStudentsByConsultant, getTodayAttendance } = useStore()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const unreadMsgs = currentUser ? getUnreadCount(currentUser.id) : 0
   const totalStudents = currentUser ? getStudentsByConsultant(currentUser.id).length : 0
   const todayAtt = currentUser ? getTodayAttendance(currentUser.id) : undefined
 
-  const handleLogout = () => { logout(); router.push('/login') }
+  const handleLogout = () => { logout(); router.push('/') }
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -104,7 +106,7 @@ export default function ConsultantSidebar({ children }: { children: React.ReactN
             <p className="text-white text-xs font-semibold truncate">{currentUser?.name}</p>
             <p className="text-white/40 text-[10px]">Consultant</p>
           </div>
-          <button onClick={handleLogout} className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors" title="Logout">
+          <button onClick={() => setShowLogoutConfirm(true)} className="text-white/40 hover:text-red-400 p-1 rounded-lg hover:bg-white/10 transition-colors" title="Logout">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -126,16 +128,20 @@ export default function ConsultantSidebar({ children }: { children: React.ReactN
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
           <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100"><Menu className="w-5 h-5" /></button>
-          <div className="hidden lg:flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-gray-500 font-medium">Live</span>
-          </div>
+          <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
             <NotificationBell />
           </div>
         </header>
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+
+      {showLogoutConfirm && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </div>
   )
 }

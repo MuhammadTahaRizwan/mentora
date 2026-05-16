@@ -6,6 +6,7 @@ import { useStore } from '@/lib/store'
 import { GraduationCap, LayoutDashboard, FolderOpen, FileText, MessageSquare, LogOut, Menu, X, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
+import LogoutConfirmModal from './LogoutConfirmModal'
 
 const NAV = [
   { href: '/student/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
@@ -19,12 +20,13 @@ export default function StudentSidebar({ children }: { children: React.ReactNode
   const router = useRouter()
   const { currentUser, logout, getUnreadCount } = useStore()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const unreadMsgs = currentUser ? getUnreadCount(currentUser.id) : 0
 
   const handleLogout = () => {
     logout()
-    router.push('/login')
+    router.push('/')
   }
 
   const SidebarContent = () => (
@@ -72,7 +74,7 @@ export default function StudentSidebar({ children }: { children: React.ReactNode
             <p className="text-white text-xs font-semibold truncate">{currentUser?.name}</p>
             <p className="text-white/40 text-[10px] truncate">{currentUser?.email}</p>
           </div>
-          <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10" title="Logout">
+          <button onClick={() => setShowLogoutConfirm(true)} className="text-white/40 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-white/10" title="Logout">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -115,6 +117,13 @@ export default function StudentSidebar({ children }: { children: React.ReactNode
           {children}
         </main>
       </div>
+
+      {showLogoutConfirm && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </div>
   )
 }

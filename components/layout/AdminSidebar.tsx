@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
+import LogoutConfirmModal from './LogoutConfirmModal'
 import {
   LayoutDashboard, Users, UserCog, BarChart3, CalendarCheck,
   LogOut, ChevronRight, Menu, Shield, Activity, UsersRound,
@@ -24,6 +25,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
   const router = useRouter()
   const { currentUser, logout, students, consultantProfiles } = useStore()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const handleLogout = () => { logout(); router.push('/') }
 
@@ -99,7 +101,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
             <p className="text-white text-xs font-semibold truncate">{currentUser?.name}</p>
             <p className="text-amber-400/60 text-[10px]">Super Admin</p>
           </div>
-          <button onClick={handleLogout} className="text-white/20 hover:text-white/60 p-1 rounded-lg hover:bg-white/5 transition-colors" title="Logout">
+          <button onClick={() => setShowLogoutConfirm(true)} className="text-white/20 hover:text-red-400 p-1 rounded-lg hover:bg-white/5 transition-colors" title="Logout">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -142,6 +144,13 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
           {children}
         </main>
       </div>
+
+      {showLogoutConfirm && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </div>
   )
 }
