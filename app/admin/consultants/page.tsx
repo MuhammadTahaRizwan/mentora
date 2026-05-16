@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useStore } from '@/lib/store'
 import { SUPPORTED_COUNTRIES } from '@/lib/utils'
 import { SupportedCountry, ConsultantProfile } from '@/lib/types'
-import { Plus, X, Search, Edit3, Trash2, Power, Globe, Star, Users, Eye, EyeOff } from 'lucide-react'
+import { Plus, X, Search, Edit3, Trash2, Power, Globe, Star, Users, Eye, EyeOff, Key, Copy, CheckCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 function CreateConsultantModal({ onClose }: { onClose: () => void }) {
@@ -118,6 +118,120 @@ function CreateConsultantModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+function CredentialsModal({ profile, onClose }: { profile: ConsultantProfile; onClose: () => void }) {
+  const { users, updateUserPassword } = useStore()
+  const user = users.find(u => u.id === profile.userId)
+  const [showPass, setShowPass] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [newPass, setNewPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [showNew, setShowNew] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const copy = () => {
+    if (!user) return
+    navigator.clipboard.writeText(`Email: ${user.email}\nPassword: ${user.password}`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleUpdatePassword = () => {
+    if (!newPass || newPass.length < 6) { toast.error('Password must be at least 6 characters'); return }
+    if (newPass !== confirmPass) { toast.error('Passwords do not match'); return }
+    if (!user) return
+    updateUserPassword(user.id, newPass)
+    toast.success('Password updated successfully!')
+    setEditing(false)
+    setNewPass('')
+    setConfirmPass('')
+  }
+
+  if (!user) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-fade-in">
+      <div className="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+        <div className="flex items-center justify-between p-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <span className="text-white font-black text-sm">{profile.name.slice(0,2).toUpperCase()}</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-white">{profile.name}</h2>
+              <p className="text-xs text-white/40 mt-0.5">Login Credentials</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-white/10 text-white/40 transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Current credentials display */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+            <div>
+              <p className="text-white/30 text-xs mb-1">Email address</p>
+              <p className="text-white font-mono text-sm">{user.email}</p>
+            </div>
+            <div className="border-t border-white/10 pt-3">
+              <p className="text-white/30 text-xs mb-1">Password</p>
+              <div className="flex items-center justify-between">
+                <p className="text-white font-mono text-sm">{showPass ? user.password : '•'.repeat(Math.min(user.password.length, 12))}</p>
+                <button onClick={() => setShowPass(s => !s)} className="text-white/30 hover:text-white/60 transition-colors ml-2">
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy button */}
+          <button
+            onClick={copy}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 transition-colors"
+          >
+            {copied ? <><CheckCheck className="w-4 h-4 text-emerald-400" /><span className="text-emerald-400">Copied!</span></> : <><Copy className="w-4 h-4" /> Copy Credentials</>}
+          </button>
+
+          {/* Change password section */}
+          {!editing ? (
+            <button
+              onClick={() => setEditing(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm font-semibold hover:bg-amber-500/20 transition-colors"
+            >
+              <Edit3 className="w-4 h-4" /> Change Password
+            </button>
+          ) : (
+            <div className="border border-amber-500/20 rounded-xl p-4 space-y-3">
+              <p className="text-amber-400 text-xs font-semibold">Set New Password</p>
+              <div className="relative">
+                <input
+                  type={showNew ? 'text' : 'password'}
+                  value={newPass}
+                  onChange={e => setNewPass(e.target.value)}
+                  placeholder="New password (min. 6 chars)"
+                  className="w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 pr-10 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50 transition-all"
+                />
+                <button type="button" onClick={() => setShowNew(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30">
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <input
+                type="password"
+                value={confirmPass}
+                onChange={e => setConfirmPass(e.target.value)}
+                placeholder="Confirm new password"
+                className="w-full bg-gray-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-amber-500/50 transition-all"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => { setEditing(false); setNewPass(''); setConfirmPass('') }} className="flex-1 py-2 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5 transition-colors">Cancel</button>
+                <button onClick={handleUpdatePassword} className="flex-1 py-2 rounded-xl bg-amber-500 text-gray-900 text-sm font-bold hover:bg-amber-400 transition-colors">Update</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function EditCountriesModal({ profile, onClose }: { profile: ConsultantProfile; onClose: () => void }) {
   const { updateConsultantProfile } = useStore()
   const [countries, setCountries] = useState<SupportedCountry[]>(profile.assignedCountries)
@@ -163,6 +277,7 @@ export default function AdminConsultants() {
   const { consultantProfiles, students, applications, toggleConsultantStatus, deleteConsultant } = useStore()
   const [showCreate, setShowCreate] = useState(false)
   const [editCountries, setEditCountries] = useState<ConsultantProfile | null>(null)
+  const [viewCredentials, setViewCredentials] = useState<ConsultantProfile | null>(null)
   const [search, setSearch] = useState('')
 
   const filtered = consultantProfiles.filter(cp =>
@@ -270,6 +385,11 @@ export default function AdminConsultants() {
 
               {/* Actions */}
               <div className="flex gap-2">
+                <button onClick={() => setViewCredentials(cp)}
+                  className="p-2 rounded-xl border border-white/10 text-white/50 hover:bg-white/5 hover:text-amber-400 hover:border-amber-500/30 transition-colors"
+                  title="View Credentials">
+                  <Key className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => setEditCountries(cp)} className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-white/10 text-white/50 text-xs font-medium hover:bg-white/5 hover:text-white transition-colors">
                   <Globe className="w-3.5 h-3.5" /> Countries
                 </button>
@@ -297,6 +417,7 @@ export default function AdminConsultants() {
 
       {showCreate && <CreateConsultantModal onClose={() => setShowCreate(false)} />}
       {editCountries && <EditCountriesModal profile={editCountries} onClose={() => setEditCountries(null)} />}
+      {viewCredentials && <CredentialsModal profile={viewCredentials} onClose={() => setViewCredentials(null)} />}
     </div>
   )
 }

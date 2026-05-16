@@ -1,7 +1,7 @@
 'use client'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User, Student, Application, Document, Message, Notification, ConsultantProfile, Attendance, SupportedCountry } from './types'
+import { User, Student, Application, Document, Message, Notification, ConsultantProfile, Attendance, SupportedCountry, Team } from './types'
 import { generateId, todayStr } from './utils'
 import {
   loadAllData, seedDatabase,
@@ -306,6 +306,17 @@ interface AppStore {
   markAllNotificationsRead: (userId: string) => void
   getNotifications: (userId: string) => Notification[]
 
+  // Teams
+  teams: Team[]
+  createTeam: (name: string, description?: string) => Team
+  deleteTeam: (id: string) => void
+  addConsultantToTeam: (teamId: string, consultantUserId: string) => void
+  removeConsultantFromTeam: (teamId: string, consultantUserId: string) => void
+  sendTeamBroadcast: (teamId: string, content: string) => void
+
+  // Admin: update consultant password
+  updateUserPassword: (userId: string, newPassword: string) => void
+
   // Seed
   seed: () => void
 
@@ -325,6 +336,7 @@ export const useStore = create<AppStore>()(
       messages: [],
       notifications: [],
       attendance: [],
+      teams: [],
       currentUser: null,
       seeded: false,
       dbLoaded: false,
@@ -644,6 +656,59 @@ export const useStore = create<AppStore>()(
 
       getNotifications: (userId) => {
         return get().notifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      },
+
+      // ── Teams ─────────────────────────────────────────────────────────────
+      createTeam: (name, description) => {
+        const team: Team = { id: generateId(), name, description, consultantIds: [], createdAt: new Date().toISOString() }
+        set(s => ({ teams: [...s.teams, team] }))
+        return team
+      },
+
+      deleteTeam: (id) => {
+        set(s => ({ teams: s.teams.filter(t => t.id !== id) }))
+      },
+
+      addConsultantToTeam: (teamId, consultantUserId) => {
+        set(s => ({
+          teams: s.teams.map(t => t.id === teamId && !t.consultantIds.includes(consultantUserId)
+            ? { ...t, consultantIds: [...t.consultantIds, consultantUserId] }
+            : t
+          ),
+        }))
+      },
+
+      removeConsultantFromTeam: (teamId, consultantUserId) => {
+        set(s => ({
+          teams: s.teams.map(t => t.id === teamId
+            ? { ...t, consultantIds: t.consultantIds.filter(id => id !== consultantUserId) }
+            : t
+          ),
+        }))
+      },
+
+      sendTeamBroadcast: (teamId, content) => {
+        const { teams, currentUser } = get()
+        const team = teams.find(t => t.id === teamId)
+        if (!team || !currentUser) return
+        team.consultantIds.forEach(consultantUserId => {
+          get().sendMessage({ senderId: currentUser.id, receiverId: consultantUserId, content })
+          get().addNotification({
+            userId: consultantUserId,
+            title: `📢 Admin Broadcast`,
+            message: content.length > 80 ? content.slice(0, 80) + '…' : content,
+            type: 'info',
+            read: false,
+            link: '/consultant/messages',
+          })
+        })
+      },
+
+      // ── Admin: update consultant password ─────────────────────────────────
+      updateUserPassword: (userId, newPassword) => {
+        set(s => ({ users: s.users.map(u => u.id === userId ? { ...u, password: newPassword } : u) }))
+        const updated = get().users.find(u => u.id === userId)
+        if (updated) void upsertUser(updated)
       },
     }),
     { name: 'mentora-store-v2' }   // bump key so old localStorage is ignored

@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils'
 import NotificationBell from './NotificationBell'
 import {
   LayoutDashboard, Users, UserCog, BarChart3, CalendarCheck,
-  LogOut, ChevronRight, Menu, Shield, Activity,
+  LogOut, ChevronRight, Menu, Shield, Activity, UsersRound,
 } from 'lucide-react'
 
 const NAV = [
   { href: '/admin/dashboard',   label: 'Command Center', icon: LayoutDashboard },
   { href: '/admin/consultants', label: 'Consultants',    icon: UserCog },
+  { href: '/admin/teams',       label: 'Teams',          icon: UsersRound },
   { href: '/admin/students',    label: 'All Students',   icon: Users },
   { href: '/admin/attendance',  label: 'Attendance',     icon: CalendarCheck },
   { href: '/admin/analytics',   label: 'Analytics',      icon: BarChart3 },
@@ -24,7 +25,7 @@ export default function AdminSidebar({ children }: { children: React.ReactNode }
   const { currentUser, logout, students, consultantProfiles } = useStore()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const handleLogout = () => { logout(); router.push('/login') }
+  const handleLogout = () => { logout(); router.push('/') }
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-[#0a0a0f]">

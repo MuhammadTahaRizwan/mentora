@@ -132,3 +132,11 @@ export interface Notification {
   createdAt: string
   link?: string
 }
+
+export interface Team {
+  id: string
+  name: string
+  description?: string
+  consultantIds: string[]   // array of consultant userIds
+  createdAt: string
+}
