@@ -3,6 +3,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { User, Student, Application, Document, Message, Notification, ConsultantProfile, Attendance, SupportedCountry } from './types'
 import { generateId, todayStr } from './utils'
+import {
+  loadAllData, seedDatabase,
+  upsertUser, upsertConsultantProfile, upsertStudent,
+  upsertApplication, upsertDocument, upsertMessage,
+  upsertNotification, upsertAttendance, deleteRow,
+} from './db'
 
 /** Notify other browser tabs of a store change */
 function broadcast() {
@@ -302,6 +308,10 @@ interface AppStore {
 
   // Seed
   seed: () => void
+
+  // Supabase
+  loadFromDB: () => Promise<void>
+  dbLoaded: boolean
 }
 
 export const useStore = create<AppStore>()(
@@ -317,6 +327,7 @@ export const useStore = create<AppStore>()(
       attendance: [],
       currentUser: null,
       seeded: false,
+      dbLoaded: false,
 
       seed: () => {
         const { seeded } = get()
@@ -332,6 +343,43 @@ export const useStore = create<AppStore>()(
           attendance: generateAttendanceSeed(),
           seeded: true,
         })
+      },
+
+      // ── Supabase: Load all data from DB ──────────────────────────────────
+      loadFromDB: async () => {
+        const data = await loadAllData()
+        if (!data) {
+          // Supabase not reachable — fall back to local seed
+          get().seed()
+          set({ dbLoaded: true })
+          return
+        }
+        if (data.users.length > 0) {
+          // DB has data — use it as source of truth
+          set({
+            users: data.users,
+            consultantProfiles: data.consultantProfiles,
+            students: data.students,
+            applications: data.applications,
+            documents: data.documents,
+            messages: data.messages,
+            notifications: data.notifications,
+            attendance: data.attendance,
+            seeded: true,
+            dbLoaded: true,
+          })
+        } else {
+          // DB is empty — seed locally then push seed data to Supabase
+          get().seed()
+          set({ dbLoaded: true })
+          const s = get()
+          await seedDatabase({
+            users: s.users, consultantProfiles: s.consultantProfiles,
+            students: s.students, applications: s.applications,
+            documents: s.documents, messages: s.messages,
+            notifications: s.notifications, attendance: s.attendance,
+          })
+        }
       },
 
       // ── Auth ──────────────────────────────────────────────────────────────
@@ -350,6 +398,7 @@ export const useStore = create<AppStore>()(
         if (users.find(u => u.email === data.email)) return { success: false, error: 'Email already registered' }
         const user: User = { ...data, id: generateId(), createdAt: new Date().toISOString() }
         set(s => ({ users: [...s.users, user] }))
+        void upsertUser(user)
         return { success: true, user }
       },
 
@@ -389,7 +438,10 @@ export const useStore = create<AppStore>()(
           link: '/consultant/students',
         })
 
-        broadcast() // notify other tabs instantly
+        broadcast()
+        // Sync updated student to Supabase
+        const updatedStudent = get().students.find(s => s.id === studentId)
+        if (updatedStudent) void upsertStudent(updatedStudent)
         return { consultantId: chosen.userId }
       },
 
@@ -407,11 +459,15 @@ export const useStore = create<AppStore>()(
           assignedCountries: data.assignedCountries, status: 'active', performanceScore: 75,
         }
         set(s => ({ users: [...s.users, user], consultantProfiles: [...s.consultantProfiles, profile] }))
+        void upsertUser(user)
+        void upsertConsultantProfile(profile)
         return { success: true }
       },
 
       updateConsultantProfile: (id, data) => {
         set(s => ({ consultantProfiles: s.consultantProfiles.map(cp => cp.id === id ? { ...cp, ...data } : cp) }))
+        const updated = get().consultantProfiles.find(cp => cp.id === id)
+        if (updated) void upsertConsultantProfile(updated)
       },
 
       toggleConsultantStatus: (profileId) => {
@@ -420,6 +476,8 @@ export const useStore = create<AppStore>()(
             cp.id === profileId ? { ...cp, status: cp.status === 'active' ? 'inactive' : 'active' } : cp
           ),
         }))
+        const updated = get().consultantProfiles.find(cp => cp.id === profileId)
+        if (updated) void upsertConsultantProfile(updated)
       },
 
       deleteConsultant: (profileId) => {
@@ -430,6 +488,8 @@ export const useStore = create<AppStore>()(
           consultantProfiles: s.consultantProfiles.filter(cp => cp.id !== profileId),
           users: s.users.filter(u => u.id !== profile.userId),
         }))
+        void deleteRow('consultant_profiles', profileId)
+        void deleteRow('users', profile.userId)
       },
 
       getConsultantProfile: (userId) => get().consultantProfiles.find(cp => cp.userId === userId),
@@ -440,12 +500,15 @@ export const useStore = create<AppStore>()(
       addStudent: (data) => {
         const student: Student = { ...data, id: generateId(), createdAt: new Date().toISOString() }
         set(s => ({ students: [...s.students, student] }))
+        void upsertStudent(student)
         broadcast()
         return student
       },
 
       updateStudent: (id, data) => {
         set(s => ({ students: s.students.map(st => st.id === id ? { ...st, ...data } : st) }))
+        const updated = get().students.find(s => s.id === id)
+        if (updated) void upsertStudent(updated)
         broadcast()
       },
 
@@ -457,12 +520,15 @@ export const useStore = create<AppStore>()(
         set(s => ({
           students: s.students.map(st => st.id === studentId ? { ...st, consultantId: newConsultantUserId } : st),
         }))
+        const updated = get().students.find(s => s.id === studentId)
+        if (updated) void upsertStudent(updated)
       },
 
       // ── Applications ──────────────────────────────────────────────────────
       addApplication: (data) => {
         const app: Application = { ...data, id: generateId(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
         set(s => ({ applications: [...s.applications, app] }))
+        void upsertApplication(app)
         broadcast()
         return app
       },
@@ -471,10 +537,15 @@ export const useStore = create<AppStore>()(
         set(s => ({
           applications: s.applications.map(a => a.id === id ? { ...a, ...data, updatedAt: new Date().toISOString() } : a),
         }))
+        const updated = get().applications.find(a => a.id === id)
+        if (updated) void upsertApplication(updated)
         broadcast()
       },
 
-      deleteApplication: (id) => set(s => ({ applications: s.applications.filter(a => a.id !== id) })),
+      deleteApplication: (id) => {
+        set(s => ({ applications: s.applications.filter(a => a.id !== id) }))
+        void deleteRow('applications', id)
+      },
 
       getApplicationsByStudent: (studentId) => get().applications.filter(a => a.studentId === studentId),
 
@@ -482,11 +553,14 @@ export const useStore = create<AppStore>()(
       addDocument: (data) => {
         const doc: Document = { ...data, id: generateId(), uploadedAt: new Date().toISOString() }
         set(s => ({ documents: [...s.documents, doc] }))
+        void upsertDocument(doc)
         return doc
       },
 
       updateDocument: (id, data) => {
         set(s => ({ documents: s.documents.map(d => d.id === id ? { ...d, ...data, reviewedAt: new Date().toISOString() } : d) }))
+        const updated = get().documents.find(d => d.id === id)
+        if (updated) void upsertDocument(updated)
       },
 
       getDocumentsByStudent: (studentId) => get().documents.filter(d => d.studentId === studentId),
@@ -495,6 +569,7 @@ export const useStore = create<AppStore>()(
       sendMessage: (data) => {
         const msg: Message = { ...data, id: generateId(), timestamp: new Date().toISOString(), read: false }
         set(s => ({ messages: [...s.messages, msg] }))
+        void upsertMessage(msg)
         return msg
       },
 
@@ -504,6 +579,8 @@ export const useStore = create<AppStore>()(
             m.senderId === senderId && m.receiverId === receiverId ? { ...m, read: true } : m
           ),
         }))
+        const affected = get().messages.filter(m => m.senderId === senderId && m.receiverId === receiverId)
+        affected.forEach(m => void upsertMessage(m))
       },
 
       getConversation: (userId1, userId2) => {
@@ -519,17 +596,18 @@ export const useStore = create<AppStore>()(
         const today = todayStr()
         const existing = get().attendance.find(a => a.consultantId === consultantId && a.date === today)
         if (existing) {
+          const updated = { ...existing, status, notes, markedAt: new Date().toISOString() }
           set(s => ({
-            attendance: s.attendance.map(a =>
-              a.id === existing.id ? { ...a, status, notes, markedAt: new Date().toISOString() } : a
-            ),
+            attendance: s.attendance.map(a => a.id === existing.id ? updated : a),
           }))
+          void upsertAttendance(updated)
         } else {
           const record: Attendance = {
             id: generateId(), consultantId, date: today, status,
             notes, markedAt: new Date().toISOString(),
           }
           set(s => ({ attendance: [...s.attendance, record] }))
+          void upsertAttendance(record)
         }
       },
 
@@ -549,14 +627,19 @@ export const useStore = create<AppStore>()(
       addNotification: (data) => {
         const notif: Notification = { ...data, id: generateId(), createdAt: new Date().toISOString() }
         set(s => ({ notifications: [...s.notifications, notif] }))
+        void upsertNotification(notif)
       },
 
       markNotificationRead: (id) => {
         set(s => ({ notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n) }))
+        const updated = get().notifications.find(n => n.id === id)
+        if (updated) void upsertNotification(updated)
       },
 
       markAllNotificationsRead: (userId) => {
         set(s => ({ notifications: s.notifications.map(n => n.userId === userId ? { ...n, read: true } : n) }))
+        const affected = get().notifications.filter(n => n.userId === userId)
+        affected.forEach(n => void upsertNotification(n))
       },
 
       getNotifications: (userId) => {

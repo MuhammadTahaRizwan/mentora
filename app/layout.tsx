@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import SupabaseSync from '@/components/SupabaseSync'
 
 export const metadata: Metadata = {
   title: 'Mentora — Study Abroad Consultancy',
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <SupabaseSync />
         {children}
         <Toaster
           position="top-right"
